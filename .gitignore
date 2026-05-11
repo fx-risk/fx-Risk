@@ -1,0 +1,8 @@
+fx-dashboard/node_modules
+fx-dashboard/dist
+fx-dashboard/.env
+fx-dashboard/.env.local
+fx-dashboard/.env.development.local
+fx-dashboard/.env.test.local
+fx-dashboard/.env.production.local
+.DS_Store
