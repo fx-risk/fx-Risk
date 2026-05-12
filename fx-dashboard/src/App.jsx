@@ -3,6 +3,8 @@ import { LayoutDashboard, TrendingUp, DollarSign, CalendarDays, FileText, Settin
 import Dashboard from './Dashboard';
 import InputScreen from './screens/InputScreen';
 import StatusScreen from './screens/StatusScreen';
+import MarketScreen from './screens/MarketScreen';
+import ReportScreen from './screens/ReportScreen';
 import { AppProvider } from './store/AppContext';
 import './index.css';
 
@@ -17,6 +19,10 @@ function App() {
         return <InputScreen />;
       case 'status':
         return <StatusScreen />;
+      case 'market':
+        return <MarketScreen />;
+      case 'reports':
+        return <ReportScreen />;
       default:
         return (
           <div className="glass-card" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
@@ -113,7 +119,7 @@ function App() {
               <div style={{ padding: '0.5rem', background: 'var(--bg-card)', borderRadius: '50%', cursor: 'pointer' }}>
                 <Bell size={20} color="var(--text-secondary)" />
               </div>
-              <button className="btn btn-primary">보고서 다운로드</button>
+              <button className="btn btn-primary" onClick={() => setActiveTab('reports')}>보고서 다운로드</button>
             </div>
           </header>
 

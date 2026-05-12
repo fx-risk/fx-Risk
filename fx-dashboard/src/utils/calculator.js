@@ -1,25 +1,44 @@
 // Risk score and recommendation logic based on spec
 
+export const SCORE_WEIGHTS = {
+  fxTrend: 0.25,
+  usRate: 0.20,
+  krwSupply: 0.15,
+  globalRisk: 0.15,
+  volatility: 0.10,
+  exposure: 0.15,
+};
+
+export const SCORE_LABELS = {
+  fxTrend: 'FX 추세',
+  usRate: '미국 금리',
+  krwSupply: '원화 수급',
+  globalRisk: '글로벌 리스크',
+  volatility: '변동성',
+  exposure: '미헤지 노출도',
+};
+
+export const calculateScoreBreakdown = (marketData) => {
+  const breakdown = {
+    fxTrend: marketData.fxTrend === 'UP' ? 80 : marketData.fxTrend === 'DOWN' ? 20 : 50,
+    usRate: marketData.usRateExpectation === 'HIGH' ? 80 : 40,
+    krwSupply: marketData.krwSupply === 'TIGHT' ? 70 : 30,
+    globalRisk: marketData.globalRisk === 'HIGH' ? 80 : 30,
+    volatility: marketData.volatility === 'HIGH' ? 80 : 40,
+    exposure: 60,
+  };
+  return breakdown;
+};
+
 export const calculateRiskScore = (marketData) => {
-  // Simple mock scoring logic for MVP
-  // In a real scenario, this would evaluate actual market data thresholds
-  
-  const fxTrendScore = marketData.fxTrend === 'UP' ? 80 : marketData.fxTrend === 'DOWN' ? 20 : 50;
-  const usRateScore = marketData.usRateExpectation === 'HIGH' ? 80 : 40;
-  const krwSupplyScore = marketData.krwSupply === 'TIGHT' ? 70 : 30;
-  const globalRiskScore = marketData.globalRisk === 'HIGH' ? 80 : 30;
-  const volatilityScore = marketData.volatility === 'HIGH' ? 80 : 40;
-  
-  // Weights based on spec
-  const totalScore = (
-    fxTrendScore * 0.25 +
-    usRateScore * 0.20 +
-    krwSupplyScore * 0.15 +
-    globalRiskScore * 0.15 +
-    volatilityScore * 0.10 +
-    60 * 0.15 // Default exposure score for MVP
-  );
-  
+  const b = calculateScoreBreakdown(marketData);
+  const totalScore =
+    b.fxTrend * SCORE_WEIGHTS.fxTrend +
+    b.usRate * SCORE_WEIGHTS.usRate +
+    b.krwSupply * SCORE_WEIGHTS.krwSupply +
+    b.globalRisk * SCORE_WEIGHTS.globalRisk +
+    b.volatility * SCORE_WEIGHTS.volatility +
+    b.exposure * SCORE_WEIGHTS.exposure;
   return Math.round(totalScore);
 };
 

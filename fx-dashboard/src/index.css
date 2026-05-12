@@ -272,3 +272,19 @@ body {
   color: var(--accent-primary);
   margin-top: 0.125rem;
 }
+
+/* Print: 리포트 인쇄/PDF 저장 시 사이드바·헤더 액션·탭 컨트롤 숨김, 흰 배경 */
+@media print {
+  body { background: white !important; color: black !important; }
+  .sidebar, .header-actions, .report-controls { display: none !important; }
+  .main-content { padding: 1rem !important; overflow: visible !important; }
+  .glass-card {
+    background: white !important; border: 1px solid #ddd !important;
+    box-shadow: none !important; color: black !important;
+    page-break-inside: avoid;
+  }
+  .glass-card:hover { transform: none !important; box-shadow: none !important; }
+  .header h1, .header p { color: black !important; }
+  .data-table th, .data-table td { color: black !important; border-color: #ddd !important; }
+  .data-table th { color: #555 !important; }
+}
