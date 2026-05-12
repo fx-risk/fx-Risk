@@ -9,12 +9,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .db import Base, engine
 from .routers import market, rates
+from . import scheduler
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    scheduler.start()
     yield
+    scheduler.stop()
 
 
 app = FastAPI(

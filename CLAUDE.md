@@ -111,3 +111,16 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 백엔드가 실행 중이면 프론트엔드의 `MarketScreen`이 자동으로 실데이터(badge="실시간")를 표시한다. 백엔드가 꺼져 있어도 프론트엔드는 mock으로 fallback해서 정상 동작한다.
+
+## 사내 배포
+
+`DEPLOY.md` 참고. Docker Compose로 한 번에 배포한다.
+
+- `docker-compose.yml` — backend + frontend(nginx) 두 서비스
+- `backend/Dockerfile` — python:3.11-slim, APScheduler가 매일 04시 자동 데이터 갱신
+- `fx-dashboard/Dockerfile` — node:20 builder + nginx:alpine 멀티스테이지
+- `fx-dashboard/nginx.conf` — 정적 SPA + `/api/*` 프록시 + Basic Auth
+- `deploy/htpasswd` — 사용자 ID/PW 해시 (gitignore로 보호, `deploy/htpasswd.example` 참고)
+- `deploy/generate-htpasswd.sh` — 대화형 ID/PW 생성 스크립트
+- API 키는 `backend/.env`에서 docker-compose의 `env_file`로 주입
+- SQLite DB는 named volume `fx_data`에 영속화

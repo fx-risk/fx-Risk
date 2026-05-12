@@ -1,0 +1,40 @@
+# 사내 배포용. 자세한 절차는 DEPLOY.md 참고.
+# 실행: docker compose up -d --build
+
+services:
+  backend:
+    build: ./backend
+    container_name: fx-risk-backend
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_PATH=/app/data/fx_risk.db
+      - CORS_ORIGINS=http://localhost
+    volumes:
+      - fx_data:/app/data
+    restart: unless-stopped
+    networks:
+      - fx-net
+
+  frontend:
+    build: ./fx-dashboard
+    container_name: fx-risk-frontend
+    ports:
+      - "80:80"
+    volumes:
+      # 사내 사용자 ID/PW 파일 마운트 (DEPLOY.md의 htpasswd 생성 절차 참고)
+      - ./deploy/htpasswd:/etc/nginx/htpasswd:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - fx-net
+
+volumes:
+  # SQLite DB 영속화 — 컨테이너 재시작/재빌드 시에도 데이터 유지
+  fx_data:
+
+networks:
+  fx-net:
+    driver: bridge

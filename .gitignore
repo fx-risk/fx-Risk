@@ -6,3 +6,11 @@ fx-dashboard/.env.development.local
 fx-dashboard/.env.test.local
 fx-dashboard/.env.production.local
 .DS_Store
+
+# 사내 사용자 ID/PW 해시 — 절대 커밋 금지
+deploy/htpasswd
+
+# IDE
+.idea/
+.vscode/
+Thumbs.db
