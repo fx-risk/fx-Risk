@@ -14,7 +14,16 @@ from pytz import timezone as pytz_timezone
 from .db import SessionLocal
 from .services import ecos, fred
 
-log = logging.getLogger(__name__)
+# uvicorn 로거를 사용해 docker compose logs에 즉시 노출되도록 함
+# (logging.getLogger(__name__)은 uvicorn 기본 설정에서 출력 안 됨)
+log = logging.getLogger("uvicorn.error")
+log.setLevel(logging.INFO)
+
+
+def report(msg: str):
+    """stdout으로 직접 출력 + 로거에도 기록 — docker logs 가시성 보장."""
+    print(msg, flush=True)
+    log.info(msg)
 
 KST = pytz_timezone("Asia/Seoul")
 scheduler = AsyncIOScheduler(timezone=KST)
@@ -46,13 +55,9 @@ async def _refresh_both(label: str):
     status_fred = f"{fred_count} rows" if fred_err is None else f"FAILED ({fred_err})"
 
     # 운영자가 보기 쉬운 단일 라인 리포트
-    log.info(
-        "[refresh-report] %s | when=%s KST | ecos=%s | fred=%s | elapsed=%.2fs",
-        label,
-        started.strftime("%Y-%m-%d %H:%M:%S"),
-        status_ecos,
-        status_fred,
-        elapsed,
+    report(
+        f"[refresh-report] {label} | when={started.strftime('%Y-%m-%d %H:%M:%S')} KST "
+        f"| ecos={status_ecos} | fred={status_fred} | elapsed={elapsed:.2f}s"
     )
 
 
@@ -91,8 +96,9 @@ def start():
     )
 
     scheduler.start()
-    log.info(
-        "[scheduler] started — daily@04:00 KST, business-hours mon-fri 08:00-16:30 KST every 30min"
+    report(
+        "[scheduler] started — daily@04:00 KST, "
+        "business-hours mon-fri 08:00-16:30 KST every 30min"
     )
 
 
