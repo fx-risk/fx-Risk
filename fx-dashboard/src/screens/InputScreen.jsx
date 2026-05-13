@@ -41,10 +41,11 @@ export default function InputScreen() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>오늘의 USD/KRW 환율</label>
-            <input 
-              type="number" 
-              value={localMarket.currentRate} 
-              onChange={e => setLocalMarket({...localMarket, currentRate: Number(e.target.value)})}
+            <input
+              type="number"
+              value={localMarket.currentRate ?? ''}
+              placeholder="예: 1395.50 (백엔드 자동값 사용 시 비워두세요)"
+              onChange={e => setLocalMarket({...localMarket, currentRate: e.target.value === '' ? null : Number(e.target.value)})}
               style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', background: 'rgba(0,0,0,0.2)', color: 'white' }}
             />
           </div>

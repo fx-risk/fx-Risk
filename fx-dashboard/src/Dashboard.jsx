@@ -4,30 +4,34 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion } from 'framer-motion';
 import { useAppContext } from './store/AppContext';
 
-// Mock Data for chart
-const rateData = [
-  { name: '5/1', rate: 1350 }, { name: '5/2', rate: 1355 }, { name: '5/3', rate: 1362 },
-  { name: '5/4', rate: 1360 }, { name: '5/5', rate: 1368 }, { name: '5/6', rate: 1375 },
-  { name: '5/7', rate: 1372 }, { name: '5/8', rate: 1380 }, { name: '5/9', rate: 1385 },
-  { name: '5/10', rate: 1390 }, { name: '5/11', rate: 1395 },
-];
-
 const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
 
+const formatRateHistoryForChart = (history) => {
+  if (!history || history.length === 0) return null;
+  const sliced = history.slice(-30);
+  return sliced.map(p => {
+    const d = new Date(p.date);
+    return { name: `${d.getMonth() + 1}/${d.getDate()}`, rate: p.rate };
+  });
+};
+
 export default function Dashboard() {
-  const { marketData, riskScore, recommendations, totalTarget, totalPurchased, totalRecommended } = useAppContext();
-  
-  const progressPercent = Math.round((totalPurchased / totalTarget) * 100);
+  const { marketData, riskScore, recommendations, totalTarget, totalPurchased, totalRecommended, liveData } = useAppContext();
+
+  const rateData = formatRateHistoryForChart(liveData?.rateHistory);
+  const progressPercent = totalTarget > 0 ? Math.round((totalPurchased / totalTarget) * 100) : 0;
+  const recRatio = (totalTarget - totalPurchased) > 0 ? Math.round((totalRecommended / (totalTarget - totalPurchased)) * 100) : 0;
 
   return (
     <div className="dashboard-grid">
       {/* Top Metrics */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="col-span-3 glass-card">
         <div className="metric-title">오늘의 USD/KRW</div>
-        <div className="metric-value">{marketData.currentRate.toFixed(2)}</div>
-        <div className="metric-trend trend-up">
-          <ArrowUpRight size={16} />
-          <span>단기 추세: {marketData.fxTrend === 'UP' ? '상승' : '하락'}</span>
+        <div className="metric-value">{marketData.currentRate != null ? marketData.currentRate.toFixed(2) : '—'}</div>
+        <div className="metric-trend" style={{ color: 'var(--text-secondary)' }}>
+          {marketData.fxTrend === 'UP' && <><ArrowUpRight size={16} color="var(--danger)" /><span>단기 추세: 상승</span></>}
+          {marketData.fxTrend === 'DOWN' && <><ArrowDownRight size={16} color="var(--success)" /><span>단기 추세: 하락</span></>}
+          {marketData.fxTrend === 'NEUTRAL' && <span>단기 추세: 보합</span>}
         </div>
       </motion.div>
 
@@ -56,7 +60,7 @@ export default function Dashboard() {
         <div className="metric-value" style={{ color: 'var(--accent-primary)' }}>{formatCurrency(totalRecommended)}</div>
         <div className="metric-trend" style={{ color: 'var(--text-secondary)' }}>
           <CheckCircle2 size={16} color="var(--accent-primary)" />
-          <span>전체 잔여금의 {Math.round((totalRecommended / (totalTarget - totalPurchased)) * 100 || 0)}% 매입 추천</span>
+          <span>전체 잔여금의 {recRatio}% 매입 추천</span>
         </div>
       </motion.div>
 
@@ -71,24 +75,30 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="chart-container">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={rateData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--danger)" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="var(--danger)" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
-              <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis domain={['dataMin - 10', 'dataMax + 10']} stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: 'var(--bg-dark)', borderColor: 'var(--border-color)', borderRadius: '8px' }}
-                itemStyle={{ color: 'var(--text-primary)' }}
-              />
-              <Area type="monotone" dataKey="rate" stroke="var(--danger)" strokeWidth={3} fillOpacity={1} fill="url(#colorRate)" />
-            </AreaChart>
-          </ResponsiveContainer>
+          {rateData ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={rateData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--danger)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--danger)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis domain={['dataMin - 10', 'dataMax + 10']} stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'var(--bg-dark)', borderColor: 'var(--border-color)', borderRadius: '8px' }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                />
+                <Area type="monotone" dataKey="rate" stroke="var(--danger)" strokeWidth={3} fillOpacity={1} fill="url(#colorRate)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+              환율 데이터 로딩 중… (백엔드 미연결 시 표시되지 않음)
+            </div>
+          )}
         </div>
       </motion.div>
 

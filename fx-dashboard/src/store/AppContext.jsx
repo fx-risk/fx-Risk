@@ -7,23 +7,23 @@ const AppContext = createContext();
 export const useAppContext = () => useContext(AppContext);
 
 export const AppProvider = ({ children }) => {
-  // Initial state for tenors
+  // Initial state for tenors — 운영 시작: 모든 값 0. 담당자가 입력 화면에서 등록.
   const [tenorPlan, setTenorPlan] = useState({
-    "1M": { target: 2000000, purchased: 600000 },
-    "2M": { target: 2000000, purchased: 900000 },
-    "3M": { target: 2000000, purchased: 1000000 },
-    "4M": { target: 2000000, purchased: 1300000 },
-    "5M": { target: 2000000, purchased: 1400000 },
+    "1M": { target: 0, purchased: 0 },
+    "2M": { target: 0, purchased: 0 },
+    "3M": { target: 0, purchased: 0 },
+    "4M": { target: 0, purchased: 0 },
+    "5M": { target: 0, purchased: 0 },
   });
 
-  // Market data inputs (백엔드 연동 전까지 fallback 값 유지)
+  // Market data — currentRate는 백엔드에서 받아오고, 나머지 enum은 담당자가 입력 화면에서 설정.
   const [marketData, setMarketData] = useState({
-    currentRate: 1395.50,
-    fxTrend: 'UP',
-    usRateExpectation: 'HIGH',
+    currentRate: null,
+    fxTrend: 'NEUTRAL',
+    usRateExpectation: 'LOW',
     krwSupply: 'NORMAL',
-    globalRisk: 'HIGH',
-    volatility: 'HIGH'
+    globalRisk: 'LOW',
+    volatility: 'NORMAL'
   });
 
   // 백엔드에서 받아온 실데이터 (null이면 mock으로 fallback)

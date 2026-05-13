@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileText, Calendar, CalendarRange, CalendarDays,
-  Download, Printer, TrendingUp, TrendingDown, AlertTriangle,
+  Download, Printer, TrendingUp, AlertTriangle,
   CheckCircle2, Target,
 } from 'lucide-react';
 import { useAppContext } from '../store/AppContext';
 
 const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
-const formatKRW = (val) => new Intl.NumberFormat('ko-KR').format(Math.round(val));
 
 const todayStr = () => {
   const d = new Date();
@@ -43,46 +42,18 @@ const marketJudgement = (score) => {
   return '리스크 안정권';
 };
 
-// 주간/월간용 mock 데이터 (실제 운영 시 백엔드에서 가져올 영역)
-const weeklyHighlights = {
-  high: 1395.50,
-  low: 1372.30,
-  open: 1378.00,
-  close: 1395.50,
-  bullDrivers: [
-    '美 4월 PPI 예상치 상회로 인플레 둔화 지연 우려',
-    'FOMC 위원 매파적 발언, 연내 금리 인하 기대 약화',
-    '중동 지정학 리스크 확대로 안전자산 선호',
-  ],
-  bearDrivers: [
-    '한국 4월 수출 +3.7% 호조',
-    '외국인 채권 자금 일부 유입',
-  ],
-  nextWeekEvents: [
-    { date: '월', event: '美 5월 소매판매', impact: 'MID' },
-    { date: '수', event: 'FOMC 의사록 공개', impact: 'HIGH' },
-    { date: '목', event: '美 신규 실업급여 청구', impact: 'LOW' },
-    { date: '금', event: '한국 5월 수출 잠정치', impact: 'MID' },
-  ],
-};
+// 주간/월간 mock 데이터 제거됨 — 백엔드 집계 API 연동 후 활성화 예정.
 
-const monthlyData = {
-  avgPurchaseRate: 1382.45,
-  avgMarketRate: 1385.10,
-  rateSaved: 2.65, // 평균 매입 환율 - 평균 시장 환율 (음수면 시장보다 비싸게 산 것)
-  noHedgeScenario: {
-    description: '월말 일괄 매입 가정',
-    estimatedLoss: 26500000, // 평균 매입 대비 추가 손실(원)
-  },
-  nextMonthOutlook: '美 CPI 발표 및 FOMC 결과에 따라 변동성 확대 예상. 1~2개월물 우선 분할 매입 권고.',
-};
-
-const impactBadge = {
-  HIGH: 'badge-danger',
-  MID: 'badge-warning',
-  LOW: 'badge-info',
-};
-const labelKR = { HIGH: '높음', MID: '중간', LOW: '낮음' };
+const PlaceholderNotice = ({ title, lines }) => (
+  <div style={{
+    padding: '2.5rem 1.5rem', textAlign: 'center', color: 'var(--text-secondary)',
+    background: 'rgba(255,255,255,0.03)', border: '1px dashed var(--border-color)',
+    borderRadius: '0.5rem', lineHeight: 1.7,
+  }}>
+    <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{title}</p>
+    {lines.map((l, i) => <p key={i} style={{ fontSize: '0.875rem' }}>{l}</p>)}
+  </div>
+);
 
 // 공통 섹션 헤더
 const Section = ({ icon: Icon, title, children, color = 'var(--accent-primary)' }) => (
@@ -137,7 +108,7 @@ function DailyReport() {
 
       <Section icon={TrendingUp} title="1) 오늘의 환율 상황">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
-          <Row label="현재 USD/KRW" value={marketData.currentRate.toFixed(2)} />
+          <Row label="현재 USD/KRW" value={marketData.currentRate != null ? marketData.currentRate.toFixed(2) : '—'} />
           <Row label="단기 추세" value={marketData.fxTrend === 'UP' ? '상승' : marketData.fxTrend === 'DOWN' ? '하락' : '보합'} />
           <Row label="시장 변동성" value={marketData.volatility === 'HIGH' ? '높음' : '보통'} accent={marketData.volatility === 'HIGH' ? 'var(--warning)' : undefined} />
         </div>
@@ -210,7 +181,7 @@ function DailyReport() {
 // ─────────────────── 주간 리포트
 function WeeklyReport() {
   const { tenorPlan, totalTarget, totalPurchased } = useAppContext();
-  const progress = Math.round((totalPurchased / totalTarget) * 100);
+  const progress = totalTarget > 0 ? Math.round((totalPurchased / totalTarget) * 100) : 0;
 
   return (
     <div>
@@ -225,36 +196,14 @@ function WeeklyReport() {
       </div>
 
       <Section icon={TrendingUp} title="1) 이번 주 원/달러 환율 흐름">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
-          <Row label="시가" value={weeklyHighlights.open.toFixed(2)} />
-          <Row label="고가" value={weeklyHighlights.high.toFixed(2)} accent="var(--danger)" />
-          <Row label="저가" value={weeklyHighlights.low.toFixed(2)} accent="var(--success)" />
-          <Row label="종가" value={weeklyHighlights.close.toFixed(2)} accent={weeklyHighlights.close > weeklyHighlights.open ? 'var(--danger)' : 'var(--success)'} />
-        </div>
+        <PlaceholderNotice
+          title="주간 환율 집계 데이터 연동 준비중"
+          lines={[
+            '주간 시가·고가·저가·종가와 강세/약세 요인은',
+            '백엔드 집계 API 연동 후 자동 채워집니다.',
+          ]}
+        />
       </Section>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.75rem' }}>
-        <div>
-          <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>
-            <TrendingUp size={18} /> 달러 강세 요인
-          </h4>
-          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            {weeklyHighlights.bullDrivers.map((d, idx) => (
-              <li key={idx} style={{ padding: '0.6rem', background: 'rgba(239, 68, 68, 0.08)', borderLeft: '3px solid var(--danger)', borderRadius: '0.25rem', fontSize: '0.875rem' }}>{d}</li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success)' }}>
-            <TrendingDown size={18} /> 달러 약세 요인
-          </h4>
-          <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            {weeklyHighlights.bearDrivers.map((d, idx) => (
-              <li key={idx} style={{ padding: '0.6rem', background: 'rgba(16, 185, 129, 0.08)', borderLeft: '3px solid var(--success)', borderRadius: '0.25rem', fontSize: '0.875rem' }}>{d}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
 
       <Section icon={Target} title="2) 만기별 매입 진행률" color="var(--accent-primary)">
         <table className="data-table">
@@ -268,7 +217,7 @@ function WeeklyReport() {
           </thead>
           <tbody>
             {Object.entries(tenorPlan).map(([tenor, plan]) => {
-              const pct = Math.round((plan.purchased / plan.target) * 100);
+              const pct = plan.target > 0 ? Math.round((plan.purchased / plan.target) * 100) : 0;
               return (
                 <tr key={tenor}>
                   <td style={{ fontWeight: 500 }}>{tenor}</td>
@@ -296,32 +245,10 @@ function WeeklyReport() {
       </Section>
 
       <Section icon={Calendar} title="3) 다음 주 주요 이벤트" color="var(--warning)">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th style={{ width: '80px' }}>요일</th>
-              <th>이벤트</th>
-              <th style={{ width: '120px' }}>영향도</th>
-            </tr>
-          </thead>
-          <tbody>
-            {weeklyHighlights.nextWeekEvents.map((e, idx) => (
-              <tr key={idx}>
-                <td style={{ fontWeight: 500 }}>{e.date}</td>
-                <td>{e.event}</td>
-                <td><span className={`badge ${impactBadge[e.impact]}`}>{labelKR[e.impact]}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Section>
-
-      <Section icon={FileText} title="4) 다음 주 선물환 매입 전략" color="var(--accent-secondary)">
-        <div style={{ padding: '1rem', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '0.5rem', borderLeft: '3px solid var(--accent-secondary)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-          단기 만기물(1M, 2M)은 결제 시점이 가까워 환율 급등 리스크 방어가 우선이다.
-          FOMC 의사록 공개 전 최소 방어 물량을 확보하고, 의사록 이후 추가 변동성 따라 분할 매입을 권고한다.
-          중장기 만기물(4M, 5M)은 환율 단기 고점권 감안하여 일부 매입 후 시장 상황 재확인 권장.
-        </div>
+        <PlaceholderNotice
+          title="이벤트 캘린더 데이터 소스 연동 준비중"
+          lines={['美 CPI·FOMC·한국 수출 등 환율 이벤트는 외부 데이터 연동 후 표시됩니다.']}
+        />
       </Section>
     </div>
   );
@@ -330,8 +257,7 @@ function WeeklyReport() {
 // ─────────────────── 월간 리포트
 function MonthlyReport() {
   const { tenorPlan, totalTarget, totalPurchased } = useAppContext();
-  const progress = Math.round((totalPurchased / totalTarget) * 100);
-  const savedKRW = monthlyData.rateSaved * totalPurchased;
+  const progress = totalTarget > 0 ? Math.round((totalPurchased / totalTarget) * 100) : 0;
 
   return (
     <div>
@@ -367,7 +293,7 @@ function MonthlyReport() {
           <tbody>
             {Object.entries(tenorPlan).map(([tenor, plan]) => {
               const remaining = Math.max(0, plan.target - plan.purchased);
-              const pct = Math.round((plan.purchased / plan.target) * 100);
+              const pct = plan.target > 0 ? Math.round((plan.purchased / plan.target) * 100) : 0;
               return (
                 <tr key={tenor}>
                   <td style={{ fontWeight: 500 }}>{tenor}</td>
@@ -382,40 +308,21 @@ function MonthlyReport() {
         </table>
       </Section>
 
-      <Section icon={TrendingUp} title="3) 평균 매입환율 분석" color="var(--accent-primary)">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-          <Row label="평균 매입환율" value={`${monthlyData.avgPurchaseRate.toFixed(2)} 원/$`} accent="var(--accent-primary)" />
-          <Row label="평균 시장환율" value={`${monthlyData.avgMarketRate.toFixed(2)} 원/$`} />
-        </div>
-        <div style={{
-          marginTop: '0.75rem', padding: '1rem',
-          background: monthlyData.rateSaved >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-          borderLeft: `3px solid ${monthlyData.rateSaved >= 0 ? 'var(--success)' : 'var(--danger)'}`,
-          borderRadius: '0.25rem',
-        }}>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>시장 대비 절감 효과</p>
-          <p style={{ fontSize: '1.125rem', fontWeight: 600, marginTop: '0.25rem', color: monthlyData.rateSaved >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-            {monthlyData.rateSaved >= 0 ? '+' : ''}{monthlyData.rateSaved.toFixed(2)}원/$ · 약 {formatKRW(savedKRW)}원 {monthlyData.rateSaved >= 0 ? '절감' : '추가 비용'}
-          </p>
-        </div>
+      <Section icon={TrendingUp} title="3) 평균 매입환율 분석 / 손익 비교" color="var(--accent-primary)">
+        <PlaceholderNotice
+          title="월간 집계 데이터 연동 준비중"
+          lines={[
+            '평균 매입환율·시장환율·미매입 시나리오 손익 비교는',
+            '백엔드 집계 API 연동 후 자동 채워집니다.',
+          ]}
+        />
       </Section>
 
-      <Section icon={FileText} title="4) 미매입 시나리오와의 손익 비교" color="var(--warning)">
-        <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.08)', borderRadius: '0.5rem', borderLeft: '3px solid var(--warning)' }}>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{monthlyData.noHedgeScenario.description}</p>
-          <p style={{ fontSize: '1.125rem', fontWeight: 600, marginTop: '0.5rem' }}>
-            분할 매입을 하지 않았을 경우 예상 추가 손실: <span style={{ color: 'var(--danger)' }}>약 {formatKRW(monthlyData.noHedgeScenario.estimatedLoss)}원</span>
-          </p>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            ※ 월말 일괄 매입 시 환율 가정 기준. 분할 매입을 통한 평균단가 효과 추정치.
-          </p>
-        </div>
-      </Section>
-
-      <Section icon={AlertTriangle} title="5) 다음 달 환율 리스크 전망 및 기본 전략" color="var(--accent-secondary)">
-        <div style={{ padding: '1rem', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '0.5rem', borderLeft: '3px solid var(--accent-secondary)', fontSize: '0.9rem', lineHeight: 1.7 }}>
-          {monthlyData.nextMonthOutlook}
-        </div>
+      <Section icon={AlertTriangle} title="4) 다음 달 환율 리스크 전망 및 기본 전략" color="var(--accent-secondary)">
+        <PlaceholderNotice
+          title="전망 데이터 연동 준비중"
+          lines={['추천 알고리즘 기반 다음 달 전망은 데이터 충분히 누적된 후 활성화됩니다.']}
+        />
       </Section>
     </div>
   );
