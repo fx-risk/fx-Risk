@@ -73,6 +73,25 @@ export const AppProvider = ({ children }) => {
     }));
   };
 
+  // Action to set monthly target per tenor (담당자가 월별 목표 등록 시 사용)
+  const setTenorTarget = (tenor, target) => {
+    setTenorPlan(prev => ({
+      ...prev,
+      [tenor]: { ...prev[tenor], target: Math.max(0, target) }
+    }));
+  };
+
+  // Bulk update of all tenor targets at once
+  const setAllTenorTargets = (targets) => {
+    setTenorPlan(prev => {
+      const next = { ...prev };
+      Object.keys(targets).forEach(t => {
+        if (next[t]) next[t] = { ...next[t], target: Math.max(0, targets[t]) };
+      });
+      return next;
+    });
+  };
+
   // Derived state: recommendations
   const riskScore = calculateRiskScore(marketData);
   
@@ -103,6 +122,8 @@ export const AppProvider = ({ children }) => {
       marketData,
       updateMarketData,
       recordPurchase,
+      setTenorTarget,
+      setAllTenorTargets,
       riskScore,
       recommendations,
       totalTarget,
